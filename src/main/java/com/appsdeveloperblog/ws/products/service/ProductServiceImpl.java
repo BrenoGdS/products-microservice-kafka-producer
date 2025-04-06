@@ -1,6 +1,6 @@
 package com.appsdeveloperblog.ws.products.service;
 
-import com.appsdeveloperblog.ws.products.event.ProductCreatedEvent;
+import com.appsdeveloperblog.ws.coreblog.event.ProductCreatedEvent;
 import com.appsdeveloperblog.ws.products.model.ProductModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
