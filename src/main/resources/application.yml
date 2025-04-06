@@ -1,0 +1,18 @@
+server:
+  port: 8080  # Random port for multiple instances
+spring:
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092,localhost:9094,localhost:9096 # define at least two bootstrap-servers addresses if you are using multiple kafka brokers/servers
+# Producer's configurations were programmatically set (KafkaProducerConfig.java), then, the lines below are commented for this reason. but if not, spring would still choose to use the configs from the bean.
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer # Serializer for keys (converts keys from String to byte array)
+#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer # Serializer for values (converts JSON to byte array)
+#      enable.idempotence: true # Prevents duplicate messages during retries.
+#      acks: all  # Wait for acknowledgements from all in-sync replicas for strong durability
+#      retries: 10  # Number of retry attempts if message sending fails (adjust as needed)
+#      max.in.flight.requests.per.connection: 5 # Maximum number of unacknowledged requests per connection (must be ≤ 5 for idempotence)
+#      properties:
+#        retry.backoff.ms: 1000        # Wait 1000 ms (1 second) before each retry attempt
+#        delivery.timeout.ms: 120000   # Maximum time (in ms) for the entire send operation (including retries); default is 2 minutes
+#        linger.ms: 0                  # Time (in ms) to buffer messages before sending as a batch; 0 means send immediately
+#        request.timeout.ms: 30000     # Maximum time (in ms) to wait for a broker's response after sending a request; default is 30 seconds
