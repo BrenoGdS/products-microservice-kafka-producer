@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:15.5
+    restart: always
+    container_name: products-postgres
+    hostname: postgres
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    command: [ 'postgres', '-c', 'wal_level=logical', '-c', 'timezone=UTC' ]
+    healthcheck:
+      test: [ 'CMD', 'psql', '-U', 'postgres', '-d', '${POSTGRES_DB}', '-c', 'SELECT 1' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - products-postgre-data:/var/lib/postgresql/data
+    networks:
+      - products-network
+  broker:
+    image: confluentinc/confluent-local:latest
+    hostname: broker
+    container_name: broker
+    ports:
+      - '29092:29092'  # Internal PLAINTEXT listener for container-to-container comms
+      - '${KAFKA_EXTERNAL_PORT:-9092}:${KAFKA_EXTERNAL_PORT:-9092}'  # External listener; defaults to 9092
+      - '9101:9101'    # JMX monitoring port
+    environment:
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker:9093'
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:${KAFKA_EXTERNAL_PORT:-9092},CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://${KAFKA_ADVERTISED_HOST:-localhost}:${KAFKA_EXTERNAL_PORT:-9092}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+    healthcheck:
+      test: [ "CMD-SHELL", "timeout 5 sh -c 'echo > /dev/tcp/${KAFKA_ADVERTISED_HOST:-localhost}:${KAFKA_EXTERNAL_PORT:-9092}'" ]
+      start_period: 60s
+      interval: 10s
+      timeout: 60s
+      retries: 10
+    networks:
+      - products-network
+
+networks:
+  products-network:
+    driver: bridge
+
+volumes:
+  products-postgre-data:
+    driver: local
