@@ -25,6 +25,7 @@ dependencies {
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'com.appsdeveloperblog.ws:core-blog:0.0.1-SNAPSHOT'
+	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 }
 
 tasks.named('test') {
