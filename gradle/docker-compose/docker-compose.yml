@@ -20,10 +20,11 @@ services:
       - products-postgre-data:/var/lib/postgresql/data
     networks:
       - products-network
-  broker:
+
+  broker1:
     image: confluentinc/confluent-local:latest
-    hostname: broker
-    container_name: broker
+    hostname: broker1
+    container_name: broker1
     ports:
       - '29092:29092'  # Internal PLAINTEXT listener for container-to-container comms
       - '${KAFKA_EXTERNAL_PORT:-9092}:${KAFKA_EXTERNAL_PORT:-9092}'  # External listener; defaults to 9092
@@ -31,18 +32,78 @@ services:
     environment:
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker:9093'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker1:9093,2@broker2:9093,3@broker3:9093'
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:${KAFKA_EXTERNAL_PORT:-9092},CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://${KAFKA_ADVERTISED_HOST:-localhost}:${KAFKA_EXTERNAL_PORT:-9092}
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker1:29092,PLAINTEXT_HOST://${KAFKA_ADVERTISED_HOST:-localhost}:${KAFKA_EXTERNAL_PORT:-9092}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_JMX_PORT: 9101
       KAFKA_JMX_HOSTNAME: localhost
     healthcheck:
       test: [ "CMD-SHELL", "timeout 5 sh -c 'echo > /dev/tcp/${KAFKA_ADVERTISED_HOST:-localhost}:${KAFKA_EXTERNAL_PORT:-9092}'" ]
+      start_period: 60s
+      interval: 10s
+      timeout: 60s
+      retries: 10
+    networks:
+      - products-network
+
+  broker2:
+    image: confluentinc/confluent-local:latest
+    hostname: broker2
+    container_name: broker2
+    ports:
+      - '29093:29092'         # Host port 29093 maps to container's port 29092
+      - '9093:9092'           # Host port 9093 maps to container's external listener port 9092
+      - '9102:9101'           # JMX mapping: host 9102 -> container 9101
+    environment:
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_NODE_ID: 2
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker1:9093,2@broker2:9093,3@broker3:9093'
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker2:29092,PLAINTEXT_HOST://localhost:9093"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+    healthcheck:
+      test: [ "CMD-SHELL", "timeout 5 sh -c 'echo > /dev/tcp/localhost:9093'" ]
+      start_period: 60s
+      interval: 10s
+      timeout: 60s
+      retries: 10
+    networks:
+      - products-network
+
+  broker3:
+    image: confluentinc/confluent-local:latest
+    hostname: broker3
+    container_name: broker3
+    ports:
+      - '29094:29092'         # Host port 29094 maps to container's port 29092
+      - '9094:9092'           # Host port 9094 maps to container's external listener port 9092
+      - '9103:9101'           # JMX mapping: host 9103 -> container 9101
+    environment:
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_NODE_ID: 3
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker1:9093,2@broker2:9093,3@broker3:9093'
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker3:29092,PLAINTEXT_HOST://localhost:9094"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+    healthcheck:
+      test: [ "CMD-SHELL", "timeout 5 sh -c 'echo > /dev/tcp/localhost:9094'" ]
       start_period: 60s
       interval: 10s
       timeout: 60s

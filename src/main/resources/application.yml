@@ -3,7 +3,7 @@ server:
 spring:
   kafka:
     producer:
-      bootstrap-servers: localhost:9092,localhost:9094,localhost:9096 # define at least two bootstrap-servers addresses if you are using multiple kafka brokers/servers
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094 # define at least two bootstrap-servers addresses if you are using multiple kafka brokers/servers
       key-serializer: org.apache.kafka.common.serialization.StringSerializer # Serializer for keys (converts keys from String to byte array)
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer # Serializer for values (converts JSON to byte array)
       enable.idempotence: true # Prevents duplicate messages during retries.
