@@ -3,12 +3,16 @@ package com.appsdeveloperblog.ws.products.service;
 import com.appsdeveloperblog.ws.coreblog.event.ProductCreatedEvent;
 import com.appsdeveloperblog.ws.products.model.ProductModel;
 import com.appsdeveloperblog.ws.products.repository.ProductRepository;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,25 +29,35 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public String createProduct(ProductModel product) {
+    public String createProduct(ProductModel productRequest) {
 
-        ProductModel newProduct = productRepository.save(product);
-        ProductCreatedEvent productCreatedEvent = new ProductCreatedEvent(newProduct.getId(),
-                product.getTitle(), product.getPrice(), product.getQuantity());
+        Optional<ProductModel> productO = productRepository.findByTitle(productRequest.getTitle());
+        UUID productId;
+        if (productO.isPresent()) {
+            productId = ((ProductModel) productRepository.save(productO.get())).getId();
+        }else{
+            productId = ((ProductModel) productRepository.save(productRequest)).getId();
+        }
+        
+        ProductCreatedEvent productCreatedEvent = new ProductCreatedEvent(productId,
+                productRequest.getTitle(), productRequest.getPrice(), productRequest.getQuantity());
 
-        // Producing the message asynchronously (non-blocking):
-        CompletableFuture<SendResult<String, ProductCreatedEvent>> asyncFuture =
-                kafkaTemplate.send("product-created-events-topic", newProduct.getId().toString(), productCreatedEvent);
+        // Create a ProducerRecord to include the message header "messageId"
+        ProducerRecord<String, ProductCreatedEvent> record = new ProducerRecord<>("product-created-events-topic",
+                productId.toString(), productCreatedEvent);
+        record.headers().add(new RecordHeader("messageId", productId.toString().getBytes(StandardCharsets.UTF_8)));
 
-        handleKafkaSendResult(asyncFuture, newProduct.getId());
+        // Produce the message asynchronously (non-blocking)
+        CompletableFuture<SendResult<String, ProductCreatedEvent>> asyncFuture = kafkaTemplate.send(record);
+
+        handleKafkaSendResult(asyncFuture, productId);
 
         // To turn the asynchronous call into synchronous, simply add:
         // asyncFuture.join();
-
         // Alternatively, you can produce the message synchronously (blocking) like this:
         //producesMessageSynchronously(newProduct, productCreatedEvent);
 
-        return newProduct.getId().toString();
+        return productId.toString();
     }
 
     private void producesMessageSynchronously(String productID, ProductCreatedEvent productCreatedEvent) {
