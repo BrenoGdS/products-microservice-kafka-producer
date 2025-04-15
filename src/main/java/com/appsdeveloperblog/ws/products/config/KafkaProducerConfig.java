@@ -49,6 +49,16 @@ public class KafkaProducerConfig {
     private int requestTimeoutMs;
 
     @Bean
+    public KafkaTemplate<String, ProductCreatedEvent> kafkaTemplate() {
+        return new KafkaTemplate<String, ProductCreatedEvent>(producerFactory());
+    }
+
+    @Bean
+    public ProducerFactory<String, ProductCreatedEvent> producerFactory() {
+        return new DefaultKafkaProducerFactory<>(producerConfigs());
+    }
+
+    @Bean
     public Map<String, Object> producerConfigs() {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -68,15 +78,5 @@ public class KafkaProducerConfig {
         props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);  // Wait up to 30 seconds for a broker response
 
         return props;
-    }
-
-    @Bean
-    public KafkaTemplate<String, ProductCreatedEvent> kafkaTemplate() {
-        return new KafkaTemplate<String, ProductCreatedEvent>(producerFactory());
-    }
-
-    @Bean
-    public ProducerFactory<String, ProductCreatedEvent> producerFactory() {
-        return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
 }
