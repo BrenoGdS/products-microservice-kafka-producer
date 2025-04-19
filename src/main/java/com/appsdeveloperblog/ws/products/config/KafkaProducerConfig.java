@@ -49,9 +49,10 @@ public class KafkaProducerConfig {
     private int requestTimeoutMs;
 
     @Bean
-    public KafkaTemplate<String, ProductCreatedEvent> kafkaTemplate() {
-        return new KafkaTemplate<String, ProductCreatedEvent>(producerFactory());
+    public KafkaTemplate<String, ProductCreatedEvent> kafkaTemplate(ProducerFactory<String, ProductCreatedEvent> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
     }
+
 
     @Bean
     public ProducerFactory<String, ProductCreatedEvent> producerFactory() {
