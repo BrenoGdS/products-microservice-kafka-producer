@@ -54,11 +54,8 @@ public class ProductServiceImpl implements ProductService {
     private UUID getUuid(ProductModel productRequest) {
         Optional<ProductModel> productO = productRepository.findByTitle(productRequest.getTitle());
         UUID productId;
-        if (productO.isPresent()) {
-            productId = ((ProductModel) productRepository.save(productO.get())).getId();
-        }else{
-            productId = ((ProductModel) productRepository.save(productRequest)).getId();
-        }
+        productO.ifPresent(productModel -> productRequest.setId(productModel.getId()));
+        productId = productRepository.save(productRequest).getId();
         return productId;
     }
 
