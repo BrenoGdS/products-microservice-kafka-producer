@@ -53,10 +53,8 @@ public class ProductServiceImpl implements ProductService {
 
     private UUID getUuid(ProductModel productRequest) {
         Optional<ProductModel> productO = productRepository.findByTitle(productRequest.getTitle());
-        UUID productId;
         productO.ifPresent(productModel -> productRequest.setId(productModel.getId()));
-        productId = productRepository.save(productRequest).getId();
-        return productId;
+        return productRepository.save(productRequest).getId();
     }
 
     private void producesMessageSynchronously(String productID, ProductCreatedEvent productCreatedEvent) {
