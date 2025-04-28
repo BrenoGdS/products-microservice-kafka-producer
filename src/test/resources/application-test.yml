@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT_INTEGRATION_TEST}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  kafka:
+    consumer:
+      group-id: product-created-events  # Unique ID for the consumer group
+      properties:
+        spring.json.trusted.packages: "com.appsdeveloperblog.ws.coreblog.event"  # Trusted package(s) for deserialization
+      auto-offset-reset: earliest
+product-created-events-topic-name: product-created-events-topic
