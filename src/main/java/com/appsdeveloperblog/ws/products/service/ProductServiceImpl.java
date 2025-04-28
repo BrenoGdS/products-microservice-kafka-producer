@@ -37,7 +37,7 @@ public class ProductServiceImpl implements ProductService {
         ProductCreatedEvent productCreatedEvent = getProductCreatedEvent(productRequest, productId);
 
         ProducerRecord<String, ProductCreatedEvent> record = new ProducerRecord<>("product-created-events-topic", productId.toString(), productCreatedEvent);
-        record.headers().add(new RecordHeader("messageId", productId.toString().getBytes(StandardCharsets.UTF_8)));
+        record.headers().add(new RecordHeader("messageId", productId.toString().getBytes(StandardCharsets.UTF_8))); //adding a header that will be used in the consumer for idempotency consumption.
 
         CompletableFuture<SendResult<String, ProductCreatedEvent>> asyncFuture = kafkaTemplate.send(record);
 
